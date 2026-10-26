@@ -1,0 +1,16 @@
+{
+  "name": "SeaSafe Maritime Safety",
+  "short_name": "SeaSafe",
+  "description": "Marine weather risk assessment and offline safety companion for small boat operators.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#060d17",
+  "theme_color": "#060d17",
+  "icons": [
+    {
+      "src": "./assets/icons/favicon.svg",
+      "sizes": "64x64 192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SeaSafe - Marine weather risk assessment and offline safety companion for small boat operators.">
+  <meta name="theme-color" content="#060d17">
+  <title>SeaSafe — Marine Risk & Offline Safety</title>
+  
+  <!-- Favicon & PWA -->
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Google Fonts: Outfit & JetBrains Mono for maritime telemetry -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="marine-theme">
+
+  <!-- Background Animated Ocean Radar Grid & Waves -->
+  <div class="ocean-bg" aria-hidden="true">
+    <div class="radar-sweep"></div>
+    <div class="grid-overlay"></div>
+    <div class="wave-layer wave-1"></div>
+    <div class="wave-layer wave-2"></div>
+  </div>
+
+  <!-- Global Maritime Top Navigation Bar -->
+  <header class="app-header" id="main-header">
+    <div class="header-inner">
+      <div class="brand" id="brand-logo" role="button" tabindex="0" title="Return to SeaSafe Home">
+        <div class="brand-icon">
+          <svg viewBox="0 0 32 32" fill="none" class="icon-svg">
+            <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2" stroke-opacity="0.5"/>
+            <path d="M16 4 L19 14 L16 12 L13 14 Z" fill="#00f0ff"/>
+            <path d="M16 28 L19 18 L16 20 L13 18 Z" fill="#64748b"/>
+            <path d="M7 21 Q 11 18 16 21 T 25 21" stroke="#00f0ff" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="2.5" fill="#00f0ff"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">SeaSafe</span>
+          <span class="brand-sub">MARITIME RISK SYSTEM</span>
+        </div>
+      </div>
+
+      <!-- Quick Status Indicators -->
+      <div class="header-status-group">
+        <!-- Online/Offline Badge -->
+        <div id="nav-network-status" class="status-pill pill-online" title="Network Connection Status">
+          <span class="status-dot"></span>
+          <span id="nav-network-text" class="status-label">ONLINE</span>
+        </div>
+
+        <!-- Global Danger Alert Indicator (flashes when limit exceeded) -->
+        <div id="nav-alert-indicator" class="status-pill pill-alert hidden" role="button" tabindex="0" title="Click to view Alert in Offline Safety">
+          <span class="alert-pulse-icon">⚠️</span>
+          <span id="nav-alert-text">LIMIT EXCEEDED</span>
+        </div>
+
+        <!-- Current Active Scenario Pill -->
+        <div id="nav-weather-badge" class="status-pill pill-weather" title="Active Marine Scenario">
+          <span class="weather-icon-inline" id="nav-weather-icon">🌊</span>
+          <span id="nav-scenario-name">Calm Conditions</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Global Danger Banner (Appears at the top of any view when limits are exceeded) -->
+  <div id="global-danger-banner" class="global-danger-banner hidden" role="alert">
+    <div class="banner-content">
+      <div class="banner-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="banner-text">
+        <strong id="banner-title">DANGER: CONFIGURED LIMIT EXCEEDED</strong>
+        <p id="banner-reason">Active conditions exceed configured vessel safety thresholds.</p>
+        <span class="banner-timestamp" id="banner-time">Detected: Just now</span>
+      </div>
+      <div class="banner-actions">
+        <button id="banner-ack-btn" class="btn btn-sm btn-outline-danger" type="button">Acknowledge</button>
+        <button id="banner-view-btn" class="btn btn-sm btn-primary-danger" type="button">View in Safety Log →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION CONTAINER: Swappable Full-Screen Views -->
+  <main id="app-viewport" class="app-viewport">
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 0: HOME SCREEN                                                       -->
+    <!-- ========================================================================= -->
+    <section id="view-home" class="screen-view active-view" aria-labelledby="home-title">
+      <div class="container home-container">
+        
+        <!-- Hero Section -->
+        <header class="home-hero">
+          <div class="hero-badge">
+            <span class="radar-dot"></span>
+            <span>VESSEL OPERATOR SAFETY ADVISORY</span>
+          </div>
+          <h1 id="home-title" class="home-title">SeaSafe</h1>
+          <p class="home-tagline">"Know the conditions, understand the risk, stay prepared."</p>
+          <p class="home-description">
+            Tailored coastal safety companion for small craft mariners. Compare your vessel's operating thresholds against marine conditions and retain vital safety records even when disconnected from cellular and internet networks.
+          </p>
+        </header>
+
+        <!-- Current Live Telemetry Snapshot Bar -->
+        <div class="live-telemetry-strip" id="home-telemetry-strip">
+          <div class="telemetry-item">
+            <span class="telemetry-label">Active Vessel</span>
+            <span class="telemetry-val" id="strip-boat-name">Sea Sprite II</span>
+            <span class="telemetry-sub" id="strip-boat-type">Center Console (21ft)</span>
+          </div>
+          <div class="telemetry-divider"></div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">Simulated Weather</span>
+            <span class="telemetry-val" id="strip-scenario">Calm Conditions</span>
+            <span class="telemetry-sub" id="strip-wind-wave">Wind: 8 kts • Wave: 1.5 ft</span>
+          </div>
+          <div class="telemetry-divider"></div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">Risk Assessment</span>
+            <span class="telemetry-val" id="strip-risk-status">
+              <span class="status-pill pill-safe">SAFE OPERATING MARGIN</span>
+            </span>
+            <span class="telemetry-sub" id="strip-risk-sub">Within all configured thresholds</span>
+          </div>
+        </div>
+
+        <!-- THREE CORE FEATURE CARDS (EXACTLY 3 AS REQUIRED) -->
+        <div class="features-grid" role="region" aria-label="SeaSafe Core Features">
+          
+          <!-- Card 1: Vessel Safety -->
+          <article class="feature-card" id="card-vessel" tabindex="0" role="button" aria-label="Open Vessel Safety Feature">
+            <div class="card-glow"></div>
+            <div class="card-header">
+              <div class="feature-icon icon-cyan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- Boat Hull & Mast -->
+                  <path d="M2 18 L4 21 L20 21 L22 18 L2 18 Z"/>
+                  <path d="M12 4 L12 18"/>
+                  <path d="M12 5 L18 10 L12 14 Z"/>
+                  <path d="M12 7 L7 12 L12 14 Z"/>
+                  <path d="M4 21 Q 8 23 12 21 T 20 21" stroke-width="1.5"/>
+                </svg>
+              </div>
+              <span class="card-chip">Configuration & Limits</span>
+            </div>
+            <h2 class="card-title">Vessel Safety</h2>
+            <p class="card-description">
+              Configure your boat profile, craft type, and maximum operational limits for wind speed and wave height. Evaluates live marine conditions against your safety envelope to instantly identify exceeded parameters.
+            </p>
+            <div class="card-meta">
+              <span class="meta-tag" id="home-card1-limits">Max: 20 kts • 4.0 ft</span>
+              <span class="card-cta">
+                Open Vessel Safety
+                <svg viewBox="0 0 20 20" fill="currentColor" class="arrow-icon">
+                  <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              </span>
+            </div>
+          </article>
+
+          <!-- Card 2: Marine Conditions -->
+          <article class="feature-card" id="card-conditions" tabindex="0" role="button" aria-label="Open Marine Conditions Feature">
+            <div class="card-glow"></div>
+            <div class="card-header">
+              <div class="feature-icon icon-blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- Compass & Wind / Waves -->
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/>
+                  <path d="M2 20 Q 7 17 12 20 T 22 20" stroke-width="1.5"/>
+                </svg>
+              </div>
+              <span class="card-chip chip-demo">Simulated Telemetry</span>
+            </div>
+            <h2 class="card-title">Marine Conditions</h2>
+            <p class="card-description">
+              Simulate coastal weather with real-time wind speed, wave height, swell period, and nautical visibility. Toggle between Calm and Rough scenarios to preview environmental impacts and vessel risk states.
+            </p>
+            <div class="card-meta">
+              <span class="meta-tag" id="home-card2-scenario">Active: Calm Conditions</span>
+              <span class="card-cta">
+                Open Marine Conditions
+                <svg viewBox="0 0 20 20" fill="currentColor" class="arrow-icon">
+                  <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              </span>
+            </div>
+          </article>
+
+          <!-- Card 3: Offline Safety -->
+          <article class="feature-card" id="card-offline" tabindex="0" role="button" aria-label="Open Offline Safety Feature">
+            <div class="card-glow"></div>
+            <div class="card-header">
+              <div class="feature-icon icon-emerald">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- Offline Cloud / Anchor / Vault -->
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M8 19 L16 19"/>
+                </svg>
+              </div>
+              <span class="card-chip chip-cache">PWA & Local Storage</span>
+            </div>
+            <h2 class="card-title">Offline Safety</h2>
+            <p class="card-description">
+              Zero-connectivity marine safety hub. Access saved boat profiles, last timestamped risk assessments, and danger alerts when offshore. Powered by Service Worker caching for complete offline functionality.
+            </p>
+            <div class="card-meta">
+              <span class="meta-tag" id="home-card3-status">Cache: Active & Preserved</span>
+              <span class="card-cta">
+                Open Offline Safety
+                <svg viewBox="0 0 20 20" fill="currentColor" class="arrow-icon">
+                  <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              </span>
+            </div>
+          </article>
+
+        </div>
+
+        <!-- Safety Disclaimer Banner (Mandatory requirement) -->
+        <footer class="safety-disclaimer-box" role="note" aria-label="Safety Disclaimer">
+          <div class="disclaimer-header">
+            <span class="disclaimer-badge">MARITIME SAFETY NOTICE</span>
+          </div>
+          <p class="disclaimer-text">
+            <strong>Safety Disclaimer:</strong> SeaSafe is an educational prototype, not a certified navigation system. It does not replace official marine forecasts, marine time authorities, emergency communications, or professional judgment. Staying within configured limits must never be presented as a guarantee of safety.
+          </p>
+        </footer>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: VESSEL SAFETY SCREEN (FULL SCREEN VIEW)                           -->
+    <!-- ========================================================================= -->
+    <section id="view-vessel" class="screen-view" aria-labelledby="vessel-title">
+      <div class="container feature-screen-container">
+        
+        <!-- Navigation Header with Back to Home -->
+        <div class="feature-screen-nav">
+          <button class="btn btn-back back-to-home-btn" data-target="home" type="button" aria-label="Return to SeaSafe Home">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="btn-icon">
+              <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+            </svg>
+            <span>Back to Home</span>
+          </button>
+          <div class="screen-crumb">SeaSafe / <strong>Vessel Safety</strong></div>
+        </div>
+
+        <!-- Screen Header -->
+        <div class="screen-header">
+          <div class="screen-icon-wrapper icon-cyan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 18 L4 21 L20 21 L22 18 L2 18 Z"/>
+              <path d="M12 4 L12 18"/>
+              <path d="M12 5 L18 10 L12 14 Z"/>
+              <path d="M12 7 L7 12 L12 14 Z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 id="vessel-title" class="screen-title">Vessel Safety Configuration</h1>
+            <p class="screen-subtitle">
+              Specify your boat details and operational maximum thresholds. Parameters are saved locally and evaluated against marine weather conditions in real-time.
+            </p>
+          </div>
+        </div>
+
+        <!-- 2-Column Layout: Form & Real-Time Comparison -->
+        <div class="view-grid">
+          
+          <!-- Column 1: Vessel Profile & Limits Form -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <h2 class="panel-title">Boat Profile & Operational Limits</h2>
+              <span class="status-indicator-dot" title="Auto-saves to local storage"></span>
+            </div>
+            
+            <form id="vessel-form" class="maritime-form" novalidate>
+              
+              <!-- Boat Name Input -->
+              <div class="form-group">
+                <label for="boat-name-input" class="form-label">
+                  Boat Name
+                  <span class="required-star">*</span>
+                </label>
+                <div class="input-addon-wrap">
+                  <span class="input-addon">⚓</span>
+                  <input type="text" id="boat-name-input" class="form-input" placeholder="e.g. Sea Sprite II" value="Sea Sprite II" required maxlength="40">
+                </div>
+                <span class="form-hint">Displayed on all offline checklists and emergency assessments.</span>
+              </div>
+
+              <!-- Vessel Type Selector -->
+              <div class="form-group">
+                <label for="vessel-type-select" class="form-label">
+                  Vessel Type
+                  <span class="required-star">*</span>
+                </label>
+                <div class="input-addon-wrap">
+                  <span class="input-addon">⛵</span>
+                  <select id="vessel-type-select" class="form-input">
+                    <option value="Center Console (18-24ft)">Center Console (18-24ft)</option>
+                    <option value="Open Skiff / Runabout (14-18ft)">Open Skiff / Runabout (14-18ft)</option>
+                    <option value="Cabin Cruiser (24-32ft)">Cabin Cruiser (24-32ft)</option>
+                    <option value="Sailboat / Monohull (26-36ft)">Sailboat / Monohull (26-36ft)</option>
+                    <option value="Kayak / PWC / Personal Craft">Kayak / PWC / Personal Craft</option>
+                    <option value="Coastal Fishing / Trawler (30ft+)">Coastal Fishing / Trawler (30ft+)</option>
+                  </select>
+                </div>
+                <span class="form-hint">Hull design and displacement dictate seaworthiness in rising seas.</span>
+              </div>
+
+              <!-- Quick Presets -->
+              <div class="presets-row">
+                <span class="presets-label">Quick Limits Presets:</span>
+                <div class="preset-buttons">
+                  <button type="button" class="btn btn-xs preset-btn" data-wind="14" data-wave="2.5" data-type="Open Skiff / Runabout (14-18ft)">Skiff (14kt / 2.5ft)</button>
+                  <button type="button" class="btn btn-xs preset-btn active" data-wind="20" data-wave="4.0" data-type="Center Console (18-24ft)">Console (20kt / 4.0ft)</button>
+                  <button type="button" class="btn btn-xs preset-btn" data-wind="25" data-wave="5.5" data-type="Cabin Cruiser (24-32ft)">Cruiser (25kt / 5.5ft)</button>
+                  <button type="button" class="btn btn-xs preset-btn" data-wind="10" data-wave="1.5" data-type="Kayak / PWC / Personal Craft">Kayak (10kt / 1.5ft)</button>
+                </div>
+              </div>
+
+              <!-- Max Wind Speed -->
+              <div class="form-group">
+                <div class="label-with-val">
+                  <label for="max-wind-input" class="form-label">
+                    Maximum Configured Wind Speed
+                    <span class="required-star">*</span>
+                  </label>
+                  <span class="live-val-badge" id="max-wind-val">20 Knots</span>
+                </div>
+                <div class="range-with-number">
+                  <input type="range" id="max-wind-slider" min="5" max="45" step="1" value="20" class="marine-slider">
+                  <div class="input-number-wrap">
+                    <input type="number" id="max-wind-input" class="form-input form-input-num" min="5" max="50" step="1" value="20">
+                    <span class="unit-tag">kts</span>
+                  </div>
+                </div>
+                <span class="form-hint">Recommended conservative limit for craft stability and maneuverability.</span>
+              </div>
+
+              <!-- Max Wave Height -->
+              <div class="form-group">
+                <div class="label-with-val">
+                  <label for="max-wave-input" class="form-label">
+                    Maximum Configured Wave Height
+                    <span class="required-star">*</span>
+                  </label>
+                  <span class="live-val-badge" id="max-wave-val">4.0 Feet</span>
+                </div>
+                <div class="range-with-number">
+                  <input type="range" id="max-wave-slider" min="1" max="15" step="0.5" value="4.0" class="marine-slider">
+                  <div class="input-number-wrap">
+                    <input type="number" id="max-wave-input" class="form-input form-input-num" min="1" max="20" step="0.5" value="4.0">
+                    <span class="unit-tag">ft</span>
+                  </div>
+                </div>
+                <span class="form-hint">Significant wave height threshold before risk of swamping or deck wash.</span>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="form-actions">
+                <button type="submit" id="save-vessel-btn" class="btn btn-primary">
+                  <svg viewBox="0 0 20 20" fill="currentColor" class="btn-icon">
+                    <path d="M7.707 10.293a1 1 0 010-1.414l3-3a1 1 0 011.414 1.414L10.414 9H16a1 1 0 110 2h-5.586l1.707 1.707a1 1 0 01-1.414 1.414l-3-3z"/>
+                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 8a1 1 0 011-1h12a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Save Vessel Details</span>
+                </button>
+                <span id="vessel-save-feedback" class="save-feedback" aria-live="polite"></span>
+              </div>
+
+            </form>
+          </div>
+
+          <!-- Column 2: Live Condition Comparison & Threshold Evaluation -->
+          <div class="panel-card panel-evaluation">
+            <div class="panel-header">
+              <h2 class="panel-title">Real-Time Limit Comparison</h2>
+              <span class="badge-scenario" id="comparison-active-scenario">Scenario: Calm</span>
+            </div>
+
+            <!-- Overall Status Banner -->
+            <div id="vessel-risk-summary-box" class="risk-summary-box state-safe">
+              <div class="risk-summary-icon" id="vessel-risk-icon">✓</div>
+              <div class="risk-summary-content">
+                <h3 id="vessel-risk-heading">ALL CONDITIONS WITHIN CONFIGURED LIMITS</h3>
+                <p id="vessel-risk-explanation">
+                  Simulated marine weather does not exceed your configured operating limits.
+                </p>
+              </div>
+            </div>
+
+            <!-- Comparison Bar 1: Wind Speed -->
+            <div class="comparison-block">
+              <div class="comp-header">
+                <span class="comp-title">Wind Speed Comparison</span>
+                <span class="comp-numbers" id="wind-comp-ratio">8.0 kts / 20.0 kts</span>
+              </div>
+              <div class="comp-bar-track">
+                <div class="comp-bar-fill bar-cyan" id="wind-comp-fill" style="width: 40%;"></div>
+                <div class="comp-bar-marker" id="wind-comp-limit-marker" style="left: 100%;" title="Max Limit"></div>
+              </div>
+              <div class="comp-details" id="wind-comp-detail">
+                <span class="detail-tag tag-ok">Safe Margin</span>
+                <span class="detail-text">Current wind (8.0 kts) is 12.0 kts below your maximum threshold (20.0 kts).</span>
+              </div>
+            </div>
+
+            <!-- Comparison Bar 2: Wave Height -->
+            <div class="comparison-block">
+              <div class="comp-header">
+                <span class="comp-title">Wave Height Comparison</span>
+                <span class="comp-numbers" id="wave-comp-ratio">1.5 ft / 4.0 ft</span>
+              </div>
+              <div class="comp-bar-track">
+                <div class="comp-bar-fill bar-cyan" id="wave-comp-fill" style="width: 37.5%;"></div>
+                <div class="comp-bar-marker" id="wave-comp-limit-marker" style="left: 100%;" title="Max Limit"></div>
+              </div>
+              <div class="comp-details" id="wave-comp-detail">
+                <span class="detail-tag tag-ok">Safe Margin</span>
+                <span class="detail-text">Current wave height (1.5 ft) is 2.5 ft below your maximum threshold (4.0 ft).</span>
+              </div>
+            </div>
+
+            <!-- Quick Scenario Switcher Inside Vessel View -->
+            <div class="in-view-scenario-box">
+              <span class="in-view-label">Quick Scenario Switch:</span>
+              <div class="btn-group-scenarios">
+                <button type="button" class="btn btn-sm btn-scenario-toggle active" data-scenario="calm">
+                  ☀️ Calm (8 kts / 1.5 ft)
+                </button>
+                <button type="button" class="btn btn-sm btn-scenario-toggle" data-scenario="rough">
+                  🌊 Rough (26 kts / 6.8 ft)
+                </button>
+              </div>
+            </div>
+
+            <!-- Profile Summary Card -->
+            <div class="vessel-profile-chip">
+              <div class="chip-item">
+                <span class="chip-lbl">Boat Name</span>
+                <strong id="chip-boat-name">Sea Sprite II</strong>
+              </div>
+              <div class="chip-item">
+                <span class="chip-lbl">Type</span>
+                <strong id="chip-vessel-type">Center Console</strong>
+              </div>
+              <div class="chip-item">
+                <span class="chip-lbl">Saved In</span>
+                <strong class="text-cyan">Local Storage</strong>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: MARINE CONDITIONS SCREEN (FULL SCREEN VIEW)                       -->
+    <!-- ========================================================================= -->
+    <section id="view-conditions" class="screen-view" aria-labelledby="conditions-title">
+      <div class="container feature-screen-container">
+        
+        <!-- Navigation Header with Back to Home -->
+        <div class="feature-screen-nav">
+          <button class="btn btn-back back-to-home-btn" data-target="home" type="button" aria-label="Return to SeaSafe Home">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="btn-icon">
+              <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+            </svg>
+            <span>Back to Home</span>
+          </button>
+          <div class="screen-crumb">SeaSafe / <strong>Marine Conditions</strong></div>
+        </div>
+
+        <!-- Screen Header -->
+        <div class="screen-header">
+          <div class="screen-icon-wrapper icon-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 id="conditions-title" class="screen-title">Marine Conditions Telemetry</h1>
+            <p class="screen-subtitle">
+              Fetch actual coastal weather using the free Open-Meteo API or test simulated marine scenarios against your vessel thresholds.
+            </p>
+          </div>
+        </div>
+
+        <!-- MANDATORY NAVIGATION ADVISORY WARNING -->
+        <div class="nav-warning-banner" role="alert">
+          <span class="warning-icon">⚠️</span>
+          <div class="warning-content">
+            <strong>Navigation Warning:</strong> Weather data is informational and not sufficient for navigation decisions. Always verify with official marine forecasts, maritime authorities, emergency radio broadcasts, and professional judgment before getting underway.
+          </div>
+        </div>
+
+        <!-- REAL-TIME LOCATION SEARCH & WEATHER FETCH CONTROLS -->
+        <div class="panel-card weather-search-panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Fetch Current Weather (Open-Meteo Free API)</h2>
+              <p class="panel-sub">Real-time coastal atmospheric telemetry — no API keys required.</p>
+            </div>
+            <div class="live-status-pill" id="live-api-badge">
+              <span class="status-pulse-dot" id="weather-api-dot"></span>
+              <span id="weather-api-status-text">Open-Meteo API Ready</span>
+            </div>
+          </div>
+
+          <form id="weather-search-form" class="weather-search-form" novalidate>
+            <div class="search-inputs-wrap">
+              <div class="input-addon-wrap search-input-box">
+                <span class="input-addon">📍</span>
+                <input 
+                  type="text" 
+                  id="location-search-input" 
+                  class="form-input" 
+                  placeholder="Enter coastal port/city (e.g. Miami, Seattle) or lat, lon (25.77, -80.19)"
+                  value="Miami, Florida"
+                  required
+                >
+              </div>
+              <div class="search-btn-group">
+                <button type="submit" id="btn-fetch-weather" class="btn btn-primary">
+                  <span id="fetch-btn-spinner" class="spinner-inline hidden"></span>
+                  <span id="fetch-btn-text">Fetch Current Weather</span>
+                </button>
+                <button type="button" id="btn-gps-weather" class="btn btn-outline-cyan" title="Detect your current coastal GPS coordinates">
+                  <span>📍 GPS</span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Quick Coastal Presets -->
+            <div class="location-presets-row">
+              <span class="presets-label">Quick Coastal Presets:</span>
+              <div class="preset-buttons">
+                <button type="button" class="btn btn-xs preset-loc-btn active" data-name="Miami, Florida" data-lat="25.77" data-lon="-80.19">⚓ Miami, FL</button>
+                <button type="button" class="btn btn-xs preset-loc-btn" data-name="Key West, Florida" data-lat="24.55" data-lon="-81.78">⚓ Key West, FL</button>
+                <button type="button" class="btn btn-xs preset-loc-btn" data-name="San Diego, California" data-lat="32.71" data-lon="-117.16">⚓ San Diego, CA</button>
+                <button type="button" class="btn btn-xs preset-loc-btn" data-name="Seattle, Washington" data-lat="47.60" data-lon="-122.33">⚓ Seattle, WA</button>
+                <button type="button" class="btn btn-xs preset-loc-btn" data-name="Boston, Massachusetts" data-lat="42.36" data-lon="-71.05">⚓ Boston, MA</button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Loading State Indicator -->
+          <div id="weather-loading-bar" class="weather-loading-bar hidden" role="status">
+            <div class="spinner-radar"></div>
+            <span id="weather-loading-text">Fetching current coastal conditions from Open-Meteo API...</span>
+          </div>
+
+          <!-- Clear Error Alert Banner -->
+          <div id="weather-error-banner" class="weather-error-banner hidden" role="alert">
+            <div class="error-left">
+              <span class="error-symbol">⚠️</span>
+              <div>
+                <strong id="weather-error-title">Weather Fetch Error</strong>
+                <p id="weather-error-text">Failed to fetch current weather. Falling back to cached data.</p>
+              </div>
+            </div>
+            <button type="button" id="btn-retry-weather" class="btn btn-xs btn-outline-danger">Try Again</button>
+          </div>
+
+          <!-- Active Location & Last Updated Display -->
+          <div class="active-location-meta" id="active-location-meta">
+            <div class="meta-location-info">
+              <span class="meta-label">Active Location:</span>
+              <strong id="tele-location-name" class="meta-loc-text">Miami, Florida (25.77°N, 80.19°W)</strong>
+            </div>
+            <div class="meta-time-info">
+              <span class="meta-label">Last Updated:</span>
+              <span id="tele-updated-time" class="meta-time-text font-mono">Today, 22:45 UTC</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCENARIO SELECTOR: Live Weather & Simulated Demo Scenarios -->
+        <div class="scenario-selector-container">
+          <div class="selector-header">
+            <h2 class="section-title">Select Marine Weather Mode:</h2>
+            <span class="selector-hint">Toggle between live Open-Meteo weather or simulated scenarios.</span>
+          </div>
+          <div class="scenario-cards-grid scenario-cards-3col">
+            
+            <!-- Option 0: Live Open-Meteo Weather -->
+            <div class="scenario-card active" id="scenario-card-live" role="button" tabindex="0" data-scenario="live">
+              <div class="scenario-card-top">
+                <span class="scenario-badge badge-live">REAL-TIME API</span>
+                <span class="scenario-radio-check" id="radio-check-live">✓ Active</span>
+              </div>
+              <h3 class="scenario-name" id="card-live-name">Live Coastal Weather</h3>
+              <p class="scenario-desc" id="card-live-desc">
+                Real atmospheric weather fetched from Open-Meteo with simulated wave model.
+              </p>
+              <div class="scenario-specs">
+                <div class="spec-pill">Wind: <strong id="card-live-wind">18 kts</strong></div>
+                <div class="spec-pill">Waves: <strong id="card-live-wave">3.2 ft (Sim)</strong></div>
+                <div class="spec-pill">Vis: <strong id="card-live-vis">10+ NM</strong></div>
+                <div class="spec-pill">Temp: <strong id="card-live-temp">72°F</strong></div>
+              </div>
+            </div>
+
+            <!-- Option 1: Calm Conditions -->
+            <div class="scenario-card" id="scenario-card-calm" role="button" tabindex="0" data-scenario="calm">
+              <div class="scenario-card-top">
+                <span class="scenario-badge badge-calm">SIMULATED DEMO</span>
+                <span class="scenario-radio-check" id="radio-check-calm">Select</span>
+              </div>
+              <h3 class="scenario-name">Calm Conditions</h3>
+              <p class="scenario-desc">
+                Gentle coastal breeze with low swell. Ideal recreational boating environment.
+              </p>
+              <div class="scenario-specs">
+                <div class="spec-pill">Wind: <strong>8.0 kts</strong> (Bft 3)</div>
+                <div class="spec-pill">Waves: <strong>1.5 ft (Sim)</strong></div>
+                <div class="spec-pill">Vis: <strong>10+ NM</strong></div>
+                <div class="spec-pill">Weather: <strong>Fair</strong></div>
+              </div>
+            </div>
+
+            <!-- Option 2: Rough Conditions -->
+            <div class="scenario-card" id="scenario-card-rough" role="button" tabindex="0" data-scenario="rough">
+              <div class="scenario-card-top">
+                <span class="scenario-badge badge-rough">SIMULATED DEMO</span>
+                <span class="scenario-radio-check" id="radio-check-rough">Select</span>
+              </div>
+              <h3 class="scenario-name">Rough Conditions</h3>
+              <p class="scenario-desc">
+                Near gale with steep wind waves and heavy spray. Exceeds typical small craft limits.
+              </p>
+              <div class="scenario-specs">
+                <div class="spec-pill">Wind: <strong>26.0 kts</strong> (Bft 6/7)</div>
+                <div class="spec-pill">Waves: <strong>6.8 ft (Sim)</strong></div>
+                <div class="spec-pill">Vis: <strong>2.5 NM</strong></div>
+                <div class="spec-pill">Weather: <strong>Squall</strong></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- DETAILED TELEMETRY GRID (4 Key Instruments) -->
+        <div class="telemetry-grid">
+          
+          <!-- Metric 1: Wind Speed & Direction -->
+          <div class="telemetry-card">
+            <div class="telemetry-card-header">
+              <span class="telemetry-card-title">Wind Speed & Gusts</span>
+              <span class="telemetry-card-badge" id="tele-wind-beaufort">Force 3 • Gentle</span>
+            </div>
+            <div class="telemetry-metric-large">
+              <span class="metric-num" id="tele-wind-speed">8.0</span>
+              <span class="metric-unit">KNOTS</span>
+            </div>
+            <!-- Wind Compass Graphic -->
+            <div class="wind-compass-box">
+              <div class="compass-dial">
+                <div class="compass-needle" id="tele-compass-needle" style="transform: rotate(45deg);"></div>
+                <span class="compass-cardinal c-n">N</span>
+                <span class="compass-cardinal c-e">E</span>
+                <span class="compass-cardinal c-s">S</span>
+                <span class="compass-cardinal c-w">W</span>
+              </div>
+              <div class="compass-readout">
+                <span class="readout-label">Direction:</span>
+                <strong id="tele-wind-dir">NE (045°)</strong>
+                <span class="readout-sub" id="tele-wind-gust">Gusts: 11 kts</span>
+              </div>
+            </div>
+            <div class="telemetry-footer-bar">
+              <span>Limit: <strong id="tele-wind-limit">20.0 kts</strong></span>
+              <span id="tele-wind-status-badge" class="badge-mini status-ok">Within Threshold</span>
+            </div>
+          </div>
+
+          <!-- Metric 2: Wave Height & Swell (CLEARLY LABELED AS SIMULATED DATA) -->
+          <div class="telemetry-card telemetry-card-wave">
+            <div class="telemetry-card-header">
+              <span class="telemetry-card-title">Wave Height (Simulated)</span>
+              <span class="telemetry-card-badge badge-simulated" id="tele-wave-state">Simulated Model</span>
+            </div>
+            <div class="telemetry-metric-large">
+              <span class="metric-num" id="tele-wave-height">1.5</span>
+              <span class="metric-unit">FEET</span>
+            </div>
+
+            <!-- MANDATORY LABEL: Clearly labeled as simulated because not real measured marine data -->
+            <div class="wave-sim-notice-pill">
+              <span class="sim-dot">⚠️</span>
+              <span class="sim-text"><strong>Simulated wave data:</strong> Not real measured marine buoy data.</span>
+            </div>
+
+            <!-- Wave Graphic Visualizer -->
+            <div class="wave-visualizer-box">
+              <div class="wave-svg-container">
+                <svg viewBox="0 0 200 40" class="wave-svg" preserveAspectRatio="none">
+                  <path id="tele-wave-path" d="M0 25 Q 25 15 50 25 T 100 25 T 150 25 T 200 25 L 200 40 L 0 40 Z" fill="rgba(0, 240, 255, 0.25)" stroke="#00f0ff" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="wave-specs-list">
+                <div class="spec-line">
+                  <span>Period:</span> <strong id="tele-wave-period">7.0 seconds</strong>
+                </div>
+                <div class="spec-line">
+                  <span>Steepness:</span> <strong id="tele-wave-steepness">Low (Long Swell)</strong>
+                </div>
+              </div>
+            </div>
+            <div class="telemetry-footer-bar">
+              <span>Limit: <strong id="tele-wave-limit">4.0 ft</strong></span>
+              <span id="tele-wave-status-badge" class="badge-mini status-ok">Within Threshold</span>
+            </div>
+          </div>
+
+          <!-- Metric 3: Visibility -->
+          <div class="telemetry-card">
+            <div class="telemetry-card-header">
+              <span class="telemetry-card-title">Nautical Visibility</span>
+              <span class="telemetry-card-badge" id="tele-vis-rating">Unlimited</span>
+            </div>
+            <div class="telemetry-metric-large">
+              <span class="metric-num" id="tele-vis-dist">10+</span>
+              <span class="metric-unit">NAUTICAL MI</span>
+            </div>
+            <div class="vis-gauge-wrap">
+              <div class="vis-bar-track">
+                <div class="vis-bar-fill" id="tele-vis-bar" style="width: 100%;"></div>
+              </div>
+              <div class="vis-legend">
+                <span>0 NM (Fog)</span>
+                <span>5 NM</span>
+                <span>10+ NM (Clear)</span>
+              </div>
+            </div>
+            <div class="telemetry-notes" id="tele-vis-notes">
+              Horizon visible with clear sea lane recognition. Fog signals and radar not required.
+            </div>
+          </div>
+
+          <!-- Metric 4: Weather Conditions & Atmosphere -->
+          <div class="telemetry-card">
+            <div class="telemetry-card-header">
+              <span class="telemetry-card-title">Weather & Barometer</span>
+              <span class="telemetry-card-badge" id="tele-weather-summary">Fair Skies</span>
+            </div>
+            <div class="telemetry-metric-large">
+              <span class="metric-num" id="tele-baro-press">1018</span>
+              <span class="metric-unit">hPa / Steady</span>
+            </div>
+            <div class="weather-attributes">
+              <div class="attr-pill">
+                <span class="attr-label">Sky Condition:</span>
+                <strong id="tele-sky-condition">Scattered Clouds</strong>
+              </div>
+              <div class="attr-pill">
+                <span class="attr-label">Air Temp:</span>
+                <strong id="tele-temp">68°F (20°C)</strong>
+              </div>
+              <div class="attr-pill">
+                <span class="attr-label">Water Temp:</span>
+                <strong id="tele-water-temp">62°F (17°C)</strong>
+              </div>
+            </div>
+            <div class="telemetry-notes" id="tele-baro-trend">
+              Barometer is steady. Low risk of immediate convective frontal development.
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom Vessel Impact Summary -->
+        <div class="conditions-impact-box">
+          <div class="impact-header">
+            <h3>Impact on Saved Vessel: <span id="conditions-target-vessel" class="text-cyan">Sea Sprite II</span></h3>
+            <button class="btn btn-outline-cyan btn-sm" id="btn-save-from-conditions" type="button">
+              💾 Save This Assessment Snapshot
+            </button>
+          </div>
+          <p id="conditions-impact-text" class="impact-text">
+            Simulated weather parameters are within configured limits. Operating margin is comfortable.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: OFFLINE SAFETY SCREEN (FULL SCREEN VIEW)                          -->
+    <!-- ========================================================================= -->
+    <section id="view-offline" class="screen-view" aria-labelledby="offline-title">
+      <div class="container feature-screen-container">
+        
+        <!-- Navigation Header with Back to Home -->
+        <div class="feature-screen-nav">
+          <button class="btn btn-back back-to-home-btn" data-target="home" type="button" aria-label="Return to SeaSafe Home">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="btn-icon">
+              <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+            </svg>
+            <span>Back to Home</span>
+          </button>
+          <div class="screen-crumb">SeaSafe / <strong>Offline Safety</strong></div>
+        </div>
+
+        <!-- Screen Header -->
+        <div class="screen-header">
+          <div class="screen-icon-wrapper icon-emerald">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              <circle cx="12" cy="12" r="4"/>
+            </svg>
+          </div>
+          <div>
+            <h1 id="offline-title" class="screen-title">Offline Safety & Preserved Data</h1>
+            <p class="screen-subtitle">
+              Review cached vessel configuration, stored risk assessments, and alert history without an active internet connection.
+            </p>
+          </div>
+        </div>
+
+        <!-- MANDATORY OFFLINE STATUS & WARNING BANNER -->
+        <div class="offline-status-banner-card" id="offline-conn-card">
+          <div class="conn-status-row">
+            <div class="conn-left">
+              <span class="status-pulse-dot" id="offline-pulse-dot"></span>
+              <div>
+                <strong id="offline-conn-title" class="conn-title">Device Connection: ONLINE</strong>
+                <p id="offline-conn-desc" class="conn-desc">Web app assets and cached storage are actively synchronizing locally.</p>
+              </div>
+            </div>
+            <div class="conn-badge-pill" id="offline-sw-badge">Service Worker Active</div>
+          </div>
+          
+          <!-- Mandatory Warning Text Requirement -->
+          <div class="outdated-warning-box">
+            <span class="warning-icon">⚠️</span>
+            <span class="warning-text"><strong>Warning:</strong> When saved, weather information may be outdated. Always verify live coastal forecasts before getting underway.</span>
+          </div>
+        </div>
+
+        <!-- Action Bar: Save Assessment Snapshot Button -->
+        <div class="offline-actions-bar">
+          <div class="actions-left">
+            <button id="save-current-assessment-btn" class="btn btn-primary" type="button">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="btn-icon">
+                <path d="M7.707 10.293a1 1 0 010-1.414l3-3a1 1 0 011.414 1.414L10.414 9H16a1 1 0 110 2h-5.586l1.707 1.707a1 1 0 01-1.414 1.414l-3-3z"/>
+                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 8a1 1 0 011-1h12a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4z" clip-rule="evenodd"/>
+              </svg>
+              <span>Save Current Assessment</span>
+            </button>
+            <span id="offline-save-feedback" class="save-feedback" aria-live="polite"></span>
+          </div>
+          <div class="actions-right">
+            <button id="simulate-offline-toggle" class="btn btn-outline-cyan btn-sm" type="button">
+              Simulate Network Toggle
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 Core Offline Content Sections -->
+        <div class="offline-sections-grid">
+          
+          <!-- Section 1: Saved Vessel Profile -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <h2 class="panel-title">Saved Vessel Profile</h2>
+              <span class="chip-mini">Local Storage</span>
+            </div>
+            
+            <div class="vessel-profile-display">
+              <div class="profile-row">
+                <span class="p-label">Vessel Name:</span>
+                <strong id="offline-boat-name" class="p-val text-cyan">Sea Sprite II</strong>
+              </div>
+              <div class="profile-row">
+                <span class="p-label">Vessel Type:</span>
+                <span id="offline-boat-type" class="p-val">Center Console (18-24ft)</span>
+              </div>
+              <div class="profile-row">
+                <span class="p-label">Configured Max Wind:</span>
+                <span id="offline-max-wind" class="p-val">20.0 Knots</span>
+              </div>
+              <div class="profile-row">
+                <span class="p-label">Configured Max Wave:</span>
+                <span id="offline-max-wave" class="p-val">4.0 Feet</span>
+              </div>
+              <div class="profile-row">
+                <span class="p-label">Profile Last Updated:</span>
+                <span id="offline-vessel-timestamp" class="p-val font-mono">Today, 22:24</span>
+              </div>
+            </div>
+
+            <div class="profile-footer-tip">
+              <span>💡 You can adjust these values anytime on the <a href="#vessel" class="link-cyan open-vessel-link">Vessel Safety screen</a>.</span>
+            </div>
+          </div>
+
+          <!-- Section 2: Last Saved Assessment & Forecast Timestamp -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <h2 class="panel-title">Last Saved Assessment</h2>
+              <span class="badge-mini status-ok" id="offline-assessment-badge">Preserved</span>
+            </div>
+
+            <div class="assessment-snapshot-card" id="assessment-snapshot-content">
+              <div class="snapshot-header">
+                <div>
+                  <span class="snap-label">Saved Snapshot Timestamp:</span>
+                  <div class="snap-timestamp font-mono" id="snap-saved-time">Not saved yet</div>
+                </div>
+                <div class="snap-risk-badge" id="snap-risk-badge">
+                  <span class="status-pill pill-safe">SAFE</span>
+                </div>
+              </div>
+
+              <div class="snapshot-details-grid">
+                <div class="snap-detail-item">
+                  <span class="s-lbl">Forecast Timestamp:</span>
+                  <strong class="s-val font-mono" id="snap-forecast-time">2026-10-26 22:00 UTC</strong>
+                </div>
+                <div class="snap-detail-item">
+                  <span class="s-lbl">Scenario Recorded:</span>
+                  <strong class="s-val" id="snap-scenario-name">Calm Conditions</strong>
+                </div>
+                <div class="snap-detail-item">
+                  <span class="s-lbl">Recorded Wind:</span>
+                  <strong class="s-val" id="snap-wind-speed">8.0 kts (Max: 20 kts)</strong>
+                </div>
+                <div class="snap-detail-item">
+                  <span class="s-lbl">Recorded Waves:</span>
+                  <strong class="s-val" id="snap-wave-height">1.5 ft (Max: 4.0 ft)</strong>
+                </div>
+              </div>
+
+              <div class="snap-verdict-box" id="snap-verdict-box">
+                <strong id="snap-verdict-title">Assessment Summary:</strong>
+                <p id="snap-verdict-text">
+                  Operational envelope confirmed safe for Sea Sprite II. Margins sufficient for planned passage.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Section 3: Current & Previous Alerts (with Acknowledge feature) -->
+        <div class="panel-card panel-alerts-history">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Marine Danger Alerts & Safety Log</h2>
+              <p class="panel-sub">Automatic alerts triggered when weather conditions exceed vessel limits.</p>
+            </div>
+            <button id="clear-alerts-btn" class="btn btn-xs btn-outline-secondary" type="button">Clear Log</button>
+          </div>
+
+          <!-- Active Danger Alert Card (if any active) -->
+          <div id="active-alert-container" class="active-alert-box hidden">
+            <div class="alert-box-left">
+              <span class="alert-siren">🚨</span>
+              <div>
+                <div class="alert-headline">
+                  <strong id="active-alert-title">DANGER ALERT: CONFIGURED LIMIT EXCEEDED</strong>
+                  <span class="alert-live-tag">UNACKNOWLEDGED</span>
+                </div>
+                <p id="active-alert-reason" class="alert-reason-text">
+                  Wind speed (26.0 kts) exceeds vessel limit (20.0 kts) by +6.0 kts.
+                </p>
+                <span class="alert-time font-mono" id="active-alert-time">Triggered: Just now</span>
+              </div>
+            </div>
+            <div class="alert-box-right">
+              <button id="ack-alert-btn" class="btn btn-warning" type="button">
+                ✓ Acknowledge Alert
+              </button>
+            </div>
+          </div>
+
+          <!-- Alert History Log Table -->
+          <div class="alerts-table-wrapper">
+            <table class="marine-table" id="alerts-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Timestamp</th>
+                  <th>Reason for Alert</th>
+                  <th>Vessel</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="alerts-table-body">
+                <tr class="empty-row">
+                  <td colspan="5">No previous alerts logged. All conditions normal.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Offline Marine Emergency Checklist (Bonus preparedness tool) -->
+        <div class="panel-card emergency-checklist-card">
+          <div class="panel-header">
+            <h2 class="panel-title">Offline Small Boat Safety Checklist</h2>
+            <span class="chip-mini">Always Available</span>
+          </div>
+          <div class="checklist-grid">
+            <label class="check-item">
+              <input type="checkbox" checked>
+              <span>VHF Marine Radio monitoring Channel 16 & Channel 9</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" checked>
+              <span>USCG-approved PFD / Life jackets accessible for each crew member</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" checked>
+              <span>EPIRB / PLB and visual distress signals (flares/flags) verified</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" checked>
+              <span>Float Plan filed with shore contact including return ETA</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox">
+              <span>Anchor, rode, and bilge pump inspected and operational</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JavaScript Module -->
+  <script src="js/app.js"></script>
+</body>
+</html>
